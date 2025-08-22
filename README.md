@@ -58,3 +58,10 @@ cd simple-go-todo
 ```bash
 go run cmd/app/main.go
 ```
+
+**or**
+
+```bash
+go build cmd/app/main.go
+./main
+```
