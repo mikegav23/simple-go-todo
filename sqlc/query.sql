@@ -2,6 +2,10 @@
 SELECT * FROM users
 WHERE id = $1 LIMIT 1;
 
+-- name: GetUserByUsername :one
+SELECT * FROM users
+WHERE username = $1 LIMIT 1;
+
 -- name: ListUsers :many
 SELECT * FROM users
 ORDER BY username;
@@ -14,21 +18,17 @@ INSERT INTO users (
 )
 RETURNING *;
 
--- name: UpdateUserName :exec
+-- name: UpdateUser :one
 UPDATE users
-  set username = $2
+  set username = $2,
+  password_hash = $3
 WHERE id = $1
 RETURNING *;
 
--- name: UpdateUserPassword :exec
-UPDATE users
-  set password_hash = $2
-WHERE id = $1
-RETURNING *;
-
--- name: DeleteUser :exec
+-- name: DeleteUser :one
 DELETE FROM users
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: GetNote :one
 SELECT * FROM notes

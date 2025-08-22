@@ -70,14 +70,17 @@ func (q *Queries) DeleteNote(ctx context.Context, id int32) error {
 	return err
 }
 
-const deleteUser = `-- name: DeleteUser :exec
+const deleteUser = `-- name: DeleteUser :one
 DELETE FROM users
 WHERE id = $1
+RETURNING id, username, password_hash
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
-	return err
+func (q *Queries) DeleteUser(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRow(ctx, deleteUser, id)
+	var i User
+	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
+	return i, err
 }
 
 const getNote = `-- name: GetNote :one
@@ -111,6 +114,18 @@ WHERE id = $1 LIMIT 1
 
 func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
+	var i User
+	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, username, password_hash FROM users
+WHERE username = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
 	return i, err
@@ -192,36 +207,23 @@ func (q *Queries) UpdateNote(ctx context.Context, arg UpdateNoteParams) error {
 	return err
 }
 
-const updateUserName = `-- name: UpdateUserName :exec
+const updateUser = `-- name: UpdateUser :one
 UPDATE users
-  set username = $2
+  set username = $2,
+  password_hash = $3
 WHERE id = $1
 RETURNING id, username, password_hash
 `
 
-type UpdateUserNameParams struct {
-	ID       int32
-	Username string
-}
-
-func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) error {
-	_, err := q.db.Exec(ctx, updateUserName, arg.ID, arg.Username)
-	return err
-}
-
-const updateUserPassword = `-- name: UpdateUserPassword :exec
-UPDATE users
-  set password_hash = $2
-WHERE id = $1
-RETURNING id, username, password_hash
-`
-
-type UpdateUserPasswordParams struct {
+type UpdateUserParams struct {
 	ID           int32
+	Username     string
 	PasswordHash string
 }
 
-func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
-	return err
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Username, arg.PasswordHash)
+	var i User
+	err := row.Scan(&i.ID, &i.Username, &i.PasswordHash)
+	return i, err
 }

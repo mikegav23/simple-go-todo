@@ -39,8 +39,12 @@ func main() {
 		w.Write([]byte("welcome"))
 	})
 
+	r.Post("/login", h.LoginHandler)
+
 	r.Get("/users", h.ListUsersHandler)
 	r.Post("/users", h.CreateUserHandler)
+	r.Put("/users/{userID}", h.UpdateUserHandler)
+	r.Delete("/users/{userID}", h.DeleteUserHandler)
 
 	fmt.Println("Server listening on :8080")
 	http.ListenAndServe(":8080", r)
